@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block content %}
+<section class="page-head"><div><span class="eyebrow">GOVERNANCE · SECURITY</span><h2>Audit trail</h2><p>Every case creation, simulation and export is logged with role, timestamp and detail — required for accountable, government-grade deployment.</p></div></section>
+<div class="panel"><div class="panel-head"><div><h3>🧾 Recent activity</h3><p class="muted">Most recent 200 actions across all roles.</p></div><span>Current role: <b>{{ current_role }}</b></span></div>
+<div class="table-wrap"><table><thead><tr><th>Timestamp</th><th>Role</th><th>Action</th><th>Detail</th></tr></thead><tbody>
+{% for l in logs %}<tr><td>{{ l.ts }}</td><td><span class="pill low">{{ l.role }}</span></td><td><b>{{ l.action }}</b></td><td>{{ l.detail }}</td></tr>
+{% else %}<tr><td colspan="4" class="centered">No activity logged yet — create or simulate a case to populate the audit trail.</td></tr>{% endfor %}
+</tbody></table></div></div>
+<div class="note"><b>Role-based access (prototype):</b> Administrator (full access), Field Officer (add cases, run simulations), Viewer (read-only). Switch roles from the header to see access change live.</div>
+{% endblock %}

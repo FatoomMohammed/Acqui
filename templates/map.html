@@ -1,0 +1,43 @@
+{% extends 'base.html' %}{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<section class="page-head"><div><span class="eyebrow">GIS · EARLY WARNING MAP</span><h2>District-wise risk visualization</h2><p>Digital map of all monitored cases, colour-coded by predicted delay risk. Built on OpenStreetMap so it works with only district/state data — no proprietary land-record layer required for the prototype.</p></div></section>
+<section class="summary"><div class="card high"><small>HIGH RISK</small><strong>{{ high }}</strong><span>On the map in red</span></div><div class="card medium"><small>MEDIUM RISK</small><strong>{{ medium }}</strong><span>On the map in amber</span></div><div class="card low"><small>LOW RISK</small><strong>{{ low }}</strong><span>On the map in green</span></div><div class="card"><small>TOTAL CASES</small><strong>{{ total }}</strong><span>Plotted nationwide</span></div></section>
+<div class="panel map-panel"><div id="risk-map"></div></div>
+<div class="note"><b>Production path:</b> this view renders district-centroid markers from a static lookup table. In deployment it upgrades to parcel-level GeoJSON boundaries sourced from BhoomiRashi / state land-record GIS layers via authorized API integration.</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const points = {{ points|tojson }};
+const colors = {High: '#b42318', Medium: '#a15c00', Low: '#087443'};
+if (typeof L === 'undefined') {
+  document.getElementById('risk-map').innerHTML =
+    '<div style="padding:40px;text-align:center;color:#a15c00">' +
+    'Map library could not load — this page needs an internet connection ' +
+    '(it loads Leaflet + OpenStreetMap tiles from a CDN). Every other page in ' +
+    'AcquiPredict works fully offline.</div>';
+} else {
+const map = L.map('risk-map').setView([22.9734, 78.6569], 5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+points.forEach(p => {
+  const marker = L.circleMarker([p.lat, p.lon], {
+    radius: 8 + (p.risk / 12), color: colors[p.level], fillColor: colors[p.level],
+    fillOpacity: 0.55, weight: 2
+  }).addTo(map);
+  marker.bindPopup(
+    `<b>${p.name}</b><br>${p.district}, ${p.state}<br>` +
+    `Stage: ${p.stage}<br>` +
+    `Risk: <b style="color:${colors[p.level]}">${p.risk} · ${p.level}</b><br>` +
+    `Est. delay: ${p.pred_days} days<br>` +
+    `Top driver: ${p.driver}<br>` +
+    `<a href="/project/${p.id}">Open case →</a>`
+  );
+});
+if (points.length) {
+  const bounds = L.latLngBounds(points.map(p => [p.lat, p.lon]));
+  map.fitBounds(bounds, {padding: [40, 40]});
+}
+}
+</script>
+{% endblock %}
